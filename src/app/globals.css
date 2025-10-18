@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- Pro dark gradient background --- */
+html, body {
+  height: 100%;
+  background: radial-gradient(1200px 600px at 20% -10%, #0f172a, transparent 60%),
+              radial-gradient(1000px 500px at 100% 0%, #0b1022, transparent 60%),
+              #0a0f1a;
+  color: #e5e7eb; /* neutral-200 */
+}
+
+/* Subtle selection color */
+::selection { background: rgba(99, 102, 241, 0.35); }
+
+/* Optional: tidy scrollbars on Windows */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #374151; border-radius: 999px; }
+*::-webkit-scrollbar-track { background: transparent; }
