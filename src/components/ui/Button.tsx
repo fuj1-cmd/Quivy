@@ -2,16 +2,14 @@
 import clsx from "clsx";
 
 type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "ghost";
-  asChild?: boolean;
+  variant?: "solid" | "ghost";
+  size?: "md" | "lg";
 };
-
-export default function Button({ className, variant = "primary", ...props }: Props) {
-  const base =
-    "inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/60";
-  const styles =
-    variant === "primary"
-      ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
-      : "bg-white/5 hover:bg-white/10 text-neutral-200 border border-white/10";
-  return <button className={clsx(base, styles, className)} {...props} />;
+export default function Button({ className, variant="solid", size="md", ...props }: Props) {
+  const base = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none";
+  const sizes = size==="lg" ? "px-6 py-3 text-sm" : "px-5 py-2.5 text-sm";
+  const styles = variant==="solid"
+    ? "bg-neutral-900 hover:bg-neutral-800 text-white border border-white/10 shadow"
+    : "bg-white/5 hover:bg-white/10 text-neutral-200 border border-white/10";
+  return <button className={clsx(base, sizes, styles, className)} {...props} />;
 }

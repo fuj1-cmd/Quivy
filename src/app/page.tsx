@@ -1,66 +1,55 @@
 import Link from "next/link";
-import Container from "@/components/Container";
-import { Card, CardBody } from "@/components/ui/Card";
-
-function Tile({
-  href,
-  title,
-  desc,
-  icon,
-}: { href: string; title: string; desc: string; icon: React.ReactNode }) {
-  return (
-    <Link href={href} className="group">
-      <Card className="h-full transition-all duration-300 group-hover:translate-y-[-2px] group-hover:border-white/20">
-        <CardBody>
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-500/15 text-indigo-300">
-              {icon}
-            </div>
-            <div>
-              <div className="text-base font-semibold text-white">{title}</div>
-              <div className="text-sm text-neutral-400">{desc}</div>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </Link>
-  );
-}
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <section className="pt-28 pb-10">
-        <Container>
-          <div className="text-center">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur">
-              <span className="text-xl">✨</span>
-              <span className="text-sm font-medium text-neutral-300">Quivy</span>
-            </div>
-            <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-white">
-              Study smarter, not sweatier
-            </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-neutral-400">
-              Feed slides and notes → get grounded, exam-style quizzes with rationales. Retake anytime.
-            </p>
-          </div>
+    <main>
+      <div className="mx-auto w-full max-w-5xl px-4">
+        <div className="text-center">
+          <h1 className="font-[family-name:var(--font-display)] text-white text-6xl font-normal tracking-[0.08em] antialiased">
+            Quivy
+          </h1>
+          <p className="mx-auto mt-2.5 max-w-2xl text-white/70">
+            Generate grounded, test-like quizzes from your slides and notes. Simple. Precise. Fast.
+          </p>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2">
-            <Tile
+          {/* single set of CTAs */}
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <Link
               href="/generate"
-              title="Create Quiz"
-              desc="Upload material and generate a set in seconds."
-              icon={<span className="text-lg">🧩</span>}
-            />
-            <Tile
+              className="rounded-xl border border-white/12 bg-black/70 text-white px-6 py-3 text-sm font-medium hover:bg-black/60 hover:border-white/20 transition"
+            >
+              Create Quiz
+            </Link>
+            <Link
               href="/quizzes"
-              title="View Quizzes"
-              desc="Browse, rename, group, and retake saved sets."
-              icon={<span className="text-lg">📚</span>}
-            />
+              className="rounded-xl border border-white/12 bg-white/6 text-white/85 px-6 py-3 text-sm font-medium hover:bg-white/10 hover:text-white transition"
+            >
+              View Quizzes
+            </Link>
           </div>
-        </Container>
-      </section>
+        </div>
+
+        {/* info sections (monotone, minimal) */}
+        <div className="mt-12 grid gap-10 sm:grid-cols-2">
+          <section>
+            <div className="border-t border-white/10 pt-5">
+              <h3 className="text-white font-semibold">Create Quiz</h3>
+              <p className="mt-1.5 text-sm text-white/65">
+                Upload a deck or notes. We synthesize and generate exam-style items.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <div className="border-t border-white/10 pt-5">
+              <h3 className="text-white font-semibold">View Quizzes</h3>
+              <p className="mt-1.5 text-sm text-white/65">
+                Retake, group, and track progress. Clean, distraction-free.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
     </main>
   );
 }

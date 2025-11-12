@@ -1,47 +1,133 @@
 @import "tailwindcss";
 
+/* ---------- Design tokens (monotone) ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink:   #e5e7eb;  /* main text */
+  --muted: #9ca3af;  /* secondary text */
+  --panel: #0d1117;  /* card bg */
+  --border: rgba(255,255,255,0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* --- Pro dark gradient background --- */
+/* ---------- App background + base text ---------- */
 html, body {
   height: 100%;
-  background: radial-gradient(1200px 600px at 20% -10%, #0f172a, transparent 60%),
-              radial-gradient(1000px 500px at 100% 0%, #0b1022, transparent 60%),
-              #0a0f1a;
-  color: #e5e7eb; /* neutral-200 */
+  color: #e6e6e6;
+  background:
+    linear-gradient(to bottom, rgba(34,34,38,0.85) 0%, rgba(20,20,23,0.85) 38%, #0c0c10 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle selection color */
-::selection { background: rgba(99, 102, 241, 0.35); }
-
-/* Optional: tidy scrollbars on Windows */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+/* keep grain overlay; make it a hair lighter */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0 0 .025'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.42;
 }
+
+/* selection */
+::selection { background: rgba(148,163,184,.25); }
+
+/* ---------- Typography (plain CSS, no @apply) ---------- */
+h1, h2, h3, h4 {
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+h1 { font-size: clamp(2.25rem, 4vw, 3rem); }
+h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
+h3 { font-size: 1.25rem; }
+p  { color: #d1d5db; }
+
+a {
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+a:hover { color: #fff; }
+
+/* ---------- Form & UI helpers (plain CSS) ---------- */
+.input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: #e5e7eb;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+.input::placeholder { color: #6b7280; }
+.input:focus { box-shadow: 0 0 0 2px rgba(255,255,255,0.2); }
+
+.select {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+.select:focus { box-shadow: 0 0 0 2px rgba(255,255,255,0.2); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  color: #fff;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background .2s ease, transform .05s ease;
+}
+.btn:hover { background: #171717; }
+.btn:active { transform: translateY(1px); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: #e5e7eb;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  transition: background .2s ease, transform .05s ease;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+.btn-ghost:active { transform: translateY(1px); }
+
+.card {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* ---------- Scrollbars ---------- */
+* { scrollbar-width: thin; scrollbar-color: #374151 transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb { background: #374151; border-radius: 999px; }
 *::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Container helper ---------- */
+.container-max { max-width: 72rem; margin-inline: auto; padding-inline: 1rem; }
+
+/* ---------- Reduce motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

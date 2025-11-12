@@ -1,34 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Michroma, Inter } from "next/font/google";
 import Header from "@/components/Header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const display = Michroma({
   subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const text = Inter({
   subsets: ["latin"],
+  variable: "--font-text",
 });
 
 export const metadata: Metadata = {
-  title: "Quivy App",
-  description: "Quivy for quizzes.",
+  title: "Quivy",
+  description: "AI-powered quiz generation.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${display.variable} ${text.variable} bg-background text-foreground`}>
         <Header />
-        {/* keep content below the fixed header */}
-        <div className="pt-20">{children}</div>
+        {/* pad for the fixed header */}
+        <div className="pt-32">{children}</div>
       </body>
     </html>
   );
