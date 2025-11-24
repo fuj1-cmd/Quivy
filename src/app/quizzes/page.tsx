@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 
 // Mock quiz data
 const mockQuizzes = [
@@ -31,15 +32,22 @@ export default function QuizzesPage() {
   const [quizzes] = useState(mockQuizzes);
 
   return (
-    <main className="min-h-screen pt-28">
-      <div className="mx-auto w-full max-w-5xl px-4">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-md shadow-lg">
-          <div className="px-6 pt-6">
-            <h3 className="text-lg font-semibold text-white">Your Quizzes</h3>
-            <p className="mt-1 text-sm text-neutral-400">Retake, group, rename, or delete.</p>
+    <main className="relative min-h-screen pt-12 overflow-x-hidden">
+      <div className="relative mx-auto w-full max-w-5xl px-6 pb-24">
+        <div className="space-y-8">
+          {/* Header Section */}
+          <div className="text-center space-y-3">
+            <h1 className="font-[family-name:var(--font-display)] text-white text-3xl sm:text-4xl md:text-5xl font-bold tracking-[0.08em] antialiased bg-gradient-to-br from-white via-white to-white/60 bg-clip-text text-transparent leading-none">
+              Your Quizzes
+            </h1>
+            <p className="text-white/60 text-sm">
+              Retake, group, rename, or delete.
+            </p>
           </div>
 
-          <div className="p-6">
+          {/* Content Card */}
+          <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-black/70 to-black/50 backdrop-blur-xl">
+            <div className="p-6">
             {quizzes.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <div className="mb-4 h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
@@ -58,11 +66,10 @@ export default function QuizzesPage() {
                   </svg>
                 </div>
                 <p className="text-neutral-400 mb-4">No quizzes yet.</p>
-                <Link
-                  href="/generate"
-                  className="rounded-xl border border-white/10 bg-neutral-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-neutral-800 transition"
-                >
-                  Generate Your First Quiz
+                <Link href="/generate">
+                  <Button variant="primary" size="md">
+                    Generate Your First Quiz
+                  </Button>
                 </Link>
               </div>
             ) : (
@@ -81,21 +88,22 @@ export default function QuizzesPage() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition">
+                        <Button variant="secondary" size="sm">
                           Open
-                        </button>
-                        <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/10 transition">
+                        </Button>
+                        <Button variant="ghost" size="sm">
                           Rename
-                        </button>
-                        <button className="rounded-lg border border-red-500/30 bg-red-900/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-900/20 transition">
+                        </Button>
+                        <Button variant="danger" size="sm">
                           Delete
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+            </div>
           </div>
         </div>
       </div>
