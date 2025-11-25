@@ -1,0 +1,57 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quizzes   Quiz[]
+}
+
+model Quiz {
+  id            String        @id @default(cuid())
+  title         String
+  difficulty    String        // "easy", "medium", "hard"
+  questionType  String        // "mcq", "true_false"
+  sourceText    String        @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions     Question[]
+  attempts      QuizAttempt[]
+
+  @@index([userId])
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  question      String   @db.Text
+  options       String[] // Array of answer options
+  correctAnswer Int      // Index of correct answer
+  explanation   String?  @db.Text
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@index([quizId])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score       Int      // Number of correct answers
+  totalScore  Int      // Total number of questions
+  answers     Json     // Store user's answers as JSON
+  completedAt DateTime @default(now())
+
+  @@index([quizId])
+}
