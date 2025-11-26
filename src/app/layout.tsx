@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Michroma, Inter } from "next/font/google";
+import { Chakra_Petch, Inter } from "next/font/google";
 import Header from "@/components/Header";
 
-const display = Michroma({
+const display = Chakra_Petch({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["600", "700"],
   variable: "--font-display",
 });
 

@@ -19,6 +19,7 @@ export interface QuizQuestion {
 export interface QuizGenerationResponse {
   success: boolean;
   quiz?: {
+    id?: string;
     questions: QuizQuestion[];
     metadata: {
       difficulty: Difficulty;

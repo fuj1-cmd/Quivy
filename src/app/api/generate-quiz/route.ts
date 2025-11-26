@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateQuizWithAI } from "@/lib/openai";
+import { prisma } from "@/lib/prisma";
 import type {
   QuizGenerationRequest,
   QuizGenerationResponse,
@@ -66,11 +67,62 @@ export async function POST(request: NextRequest) {
     // Generate quiz using OpenAI
     const questions = await generateQuizWithAI(quizRequest);
 
-    // Return successful response
+    // Generate a title from the first few words of the text
+    const title = text.trim().slice(0, 50) + (text.length > 50 ? "..." : "");
+
+    // Save quiz to database
+    // For now, we'll use a temporary user ID until auth is implemented
+    const tempUserId = "temp-user-id";
+
+    // Check if temp user exists, create if not
+    let user = await prisma.user.findUnique({
+      where: { id: tempUserId },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          id: tempUserId,
+          email: "temp@quivy.app",
+          name: "Guest User",
+        },
+      });
+    }
+
+    // Save quiz and questions to database
+    const savedQuiz = await prisma.quiz.create({
+      data: {
+        title,
+        difficulty,
+        questionType,
+        sourceText: text.trim(),
+        userId: tempUserId,
+        questions: {
+          create: questions.map((q) => ({
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+          })),
+        },
+      },
+      include: {
+        questions: true,
+      },
+    });
+
+    // Return successful response with quiz ID
     const response: QuizGenerationResponse = {
       success: true,
       quiz: {
-        questions,
+        id: savedQuiz.id,
+        questions: savedQuiz.questions.map((q) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation || undefined,
+        })),
         metadata: {
           difficulty,
           questionType,
