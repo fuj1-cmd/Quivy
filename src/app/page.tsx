@@ -60,7 +60,7 @@ export default function Home() {
 
                   {/* Content */}
                   <p className="text-sm text-white/65 leading-relaxed text-left">
-                    Upload your files and we'll generate exam-style questions tailored to your content.
+                    Upload your files and we&apos;ll generate exam-style questions tailored to your content.
                   </p>
 
                   {/* CTA Button */}

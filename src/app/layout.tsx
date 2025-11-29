@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Chakra_Petch, Inter } from "next/font/google";
+import { Electrolize, Inter } from "next/font/google";
 import Header from "@/components/Header";
 
-const display = Chakra_Petch({
+const display = Electrolize({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["400"],
   variable: "--font-display",
 });
 

@@ -63,11 +63,51 @@ JSON FORMAT:
 
 // Generate user prompt with study material
 function generateUserPrompt(text: string, numQuestions: number): string {
-  return `Generate exactly ${numQuestions} quiz question(s) based on the following study material:
+  return `IMPORTANT: You MUST generate EXACTLY ${numQuestions} question(s). No more, no less.
+
+Based on the following study material, create exactly ${numQuestions} quiz question(s):
 
 ${text}
 
-Remember to return ONLY valid JSON matching the specified format.`;
+CRITICAL: The JSON response must contain EXACTLY ${numQuestions} question(s) in the questions array.
+Return ONLY valid JSON matching the specified format.`;
+}
+
+// Generate a concise quiz title from the content
+export async function generateQuizTitle(text: string): Promise<string> {
+  const client = getOpenAIClient();
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant that creates simple, clear quiz titles. Extract the main topic and format it as '[Topic] Quiz'. Examples: 'American Government Quiz', 'Photosynthesis Quiz', 'World War II Quiz'. Keep it under 50 characters. Return ONLY the title, nothing else."
+        },
+        {
+          role: "user",
+          content: `Create a simple quiz title for this content:\n\n${text.slice(0, 500)}`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 20,
+    });
+
+    const title = completion.choices[0]?.message?.content?.trim();
+
+    if (!title) {
+      // Fallback to text-based title
+      return text.trim().slice(0, 40) + " Quiz";
+    }
+
+    // Ensure it ends with "Quiz" if it doesn't already
+    const cleanTitle = title.slice(0, 50);
+    return cleanTitle.endsWith("Quiz") ? cleanTitle : cleanTitle + " Quiz";
+  } catch {
+    // Fallback to text-based title on error
+    return text.trim().slice(0, 40) + " Quiz";
+  }
 }
 
 // Main function to generate quiz using OpenAI
@@ -82,8 +122,8 @@ export async function generateQuizWithAI(
     throw new Error("Study material text cannot be empty");
   }
 
-  if (numQuestions < 1 || numQuestions > 50) {
-    throw new Error("Number of questions must be between 1 and 50");
+  if (numQuestions < 1 || numQuestions > 100) {
+    throw new Error("Number of questions must be between 1 and 100");
   }
 
   try {
@@ -111,16 +151,33 @@ export async function generateQuizWithAI(
     }
 
     // Parse the JSON response
-    const parsedResponse = JSON.parse(responseContent);
-
-    if (!parsedResponse.questions || !Array.isArray(parsedResponse.questions)) {
+    const parsedResponse = JSON.parse(responseContent) as unknown;
+    if (
+      !parsedResponse ||
+      typeof parsedResponse !== "object" ||
+      !("questions" in parsedResponse) ||
+      !Array.isArray((parsedResponse as { questions: unknown }).questions)
+    ) {
       throw new Error("Invalid response format from OpenAI");
     }
 
+    type RawQuestion = {
+      question: unknown;
+      options: unknown;
+      correctAnswer: unknown;
+      explanation?: unknown;
+    };
+
+    const rawQuestions = (parsedResponse as { questions: RawQuestion[] }).questions;
+
     // Add IDs to questions and validate structure
-    const questions: QuizQuestion[] = parsedResponse.questions.map(
-      (q: any, index: number) => {
-        if (!q.question || !Array.isArray(q.options) || typeof q.correctAnswer !== "number") {
+    const questions: QuizQuestion[] = rawQuestions.map((q, index: number) => {
+      if (
+        !q ||
+        typeof q.question !== "string" ||
+        !Array.isArray(q.options) ||
+        typeof q.correctAnswer !== "number"
+      ) {
           throw new Error(`Invalid question format at index ${index}`);
         }
 
@@ -129,10 +186,9 @@ export async function generateQuizWithAI(
           question: q.question,
           options: q.options,
           correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
+          explanation: typeof q.explanation === "string" ? q.explanation : undefined,
         };
-      }
-    );
+    });
 
     return questions;
   } catch (error) {

@@ -32,26 +32,32 @@ export default function QuizPage() {
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    fetchQuiz();
-  }, [quizId]);
+    let isCancelled = false;
 
-  const fetchQuiz = async () => {
-    try {
-      const response = await fetch(`/api/quiz/${quizId}`);
-      const data = await response.json();
+    const fetchQuiz = async () => {
+      try {
+        const response = await fetch(`/api/quiz/${quizId}`);
+        const data = await response.json();
 
-      if (data.success) {
-        setQuiz(data.quiz);
-      } else {
-        setError(data.error || "Failed to load quiz");
+        if (data.success) {
+          if (!isCancelled) setQuiz(data.quiz);
+        } else {
+          if (!isCancelled) setError(data.error || "Failed to load quiz");
+        }
+      } catch (err) {
+        if (!isCancelled) setError("Failed to load quiz");
+        console.error(err);
+      } finally {
+        if (!isCancelled) setIsLoading(false);
       }
-    } catch (err) {
-      setError("Failed to load quiz");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchQuiz();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [quizId]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswers({

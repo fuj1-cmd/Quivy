@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateQuizWithAI } from "@/lib/openai";
+import { generateQuizWithAI, generateQuizTitle } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 import type {
   QuizGenerationRequest,
@@ -64,11 +64,11 @@ export async function POST(request: NextRequest) {
       questionType,
     };
 
-    // Generate quiz using OpenAI
-    const questions = await generateQuizWithAI(quizRequest);
-
-    // Generate a title from the first few words of the text
-    const title = text.trim().slice(0, 50) + (text.length > 50 ? "..." : "");
+    // Generate quiz and title using OpenAI
+    const [questions, title] = await Promise.all([
+      generateQuizWithAI(quizRequest),
+      generateQuizTitle(text.trim())
+    ]);
 
     // Save quiz to database
     // For now, we'll use a temporary user ID until auth is implemented

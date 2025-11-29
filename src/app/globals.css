@@ -148,6 +148,52 @@ a:hover { color: #fff; }
   100% { transform: translateY(-100%); }
 }
 
+/* SVG stroke racing light animation */
+.border-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 2;
+}
+
+.light-path {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: var(--dash-array, 60 840);  /* light size, gap size */
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 4px white) drop-shadow(0 0 8px white);
+  animation: race 2s linear infinite;
+}
+
+@keyframes race {
+  to {
+    stroke-dashoffset: var(--dash-offset, -900);
+  }
+}
+
+/* Fast animation variant for download buttons */
+.fast-animation .light-path {
+  animation: race 1s linear infinite;
+}
+
+/* Download button light path animation */
+.light-path-download {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 50 470;
+  filter: drop-shadow(0 0 4px white) drop-shadow(0 0 8px white);
+  animation: race-download 1.5s linear infinite;
+}
+
+@keyframes race-download {
+  to {
+    stroke-dashoffset: -520;
+  }
+}
+
 /* ---------- Reduce motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

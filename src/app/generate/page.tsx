@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import type { QuizGenerationResponse, Difficulty, QuestionType } from "@/types/quiz";
@@ -8,16 +8,43 @@ type InputMode = "file" | "text";
 
 export default function GeneratePage() {
   const router = useRouter();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("file");
   const [studyMaterial, setStudyMaterial] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [numQuestions, setNumQuestions] = useState(10);
+  const [customQuestions, setCustomQuestions] = useState("");
+  const [isCustomAmount, setIsCustomAmount] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [questionType, setQuestionType] = useState<QuestionType>("mcq");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<QuizGenerationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [buttonBox, setButtonBox] = useState({ width: 400, height: 56, radius: 12 });
+
+  useEffect(() => {
+    const node = buttonRef.current;
+    if (!node || typeof window === "undefined") return;
+
+    const updateBox = () => {
+      const rect = node.getBoundingClientRect();
+      const computed = window.getComputedStyle(node);
+      const radius = parseFloat(computed.borderRadius) || 12;
+      setButtonBox({
+        width: rect.width || 400,
+        height: rect.height || 56,
+        radius: radius || 12,
+      });
+    };
+
+    updateBox();
+
+    const observer = new ResizeObserver(updateBox);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Handle drag over
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -63,24 +90,48 @@ export default function GeneratePage() {
       return;
     }
 
+    // Validate custom questions
+    const finalNumQuestions = isCustomAmount
+      ? (parseInt(customQuestions) || 10)
+      : numQuestions;
+
+    if (finalNumQuestions < 1 || finalNumQuestions > 100) {
+      setError("Number of questions must be between 1 and 100");
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
 
     try {
       let textToProcess = studyMaterial;
 
-      // If in file mode, read file contents (for now, just text files)
+      // If in file mode, parse files using the API
       if (inputMode === "file") {
-        // For now, only handle text files - file parsing will be added later
-        const textFiles = files.filter(f => f.name.endsWith('.txt'));
-        if (textFiles.length === 0) {
-          throw new Error("Please upload at least one .txt file. Other file types coming soon!");
+        const formData = new FormData();
+        files.forEach(file => {
+          formData.append("files", file);
+        });
+
+        const parseResponse = await fetch("/api/parse-files", {
+          method: "POST",
+          body: formData,
+        });
+
+        const parseData = await parseResponse.json();
+
+        if (!parseData.success) {
+          // Show detailed error message
+          const errorMsg = parseData.error || "Failed to process files";
+          throw new Error(errorMsg);
         }
 
-        const fileContents = await Promise.all(
-          textFiles.map(file => file.text())
-        );
-        textToProcess = fileContents.join("\n\n");
+        textToProcess = parseData.text;
+
+        // Show warning if some files failed
+        if (parseData.warnings) {
+          console.warn(parseData.warnings, parseData.failedFiles);
+        }
       }
 
       const response = await fetch("/api/generate-quiz", {
@@ -90,7 +141,7 @@ export default function GeneratePage() {
         },
         body: JSON.stringify({
           text: textToProcess,
-          numQuestions,
+          numQuestions: finalNumQuestions,
           difficulty,
           questionType,
         }),
@@ -110,9 +161,18 @@ export default function GeneratePage() {
     }
   };
 
+  const strokeWidth = 2;
+  const innerWidth = Math.max(0, buttonBox.width - strokeWidth);
+  const innerHeight = Math.max(0, buttonBox.height - strokeWidth);
+  const perimeter = 2 * (innerWidth + innerHeight);
+  const dashLength = Math.max(32, Math.min(96, perimeter * 0.07));
+  const dashGap = Math.max(80, perimeter - dashLength);
+  const dashOffset = -perimeter;
+  const cornerRadius = Math.min(buttonBox.radius, innerHeight / 2);
+
   return (
-    <main className="relative min-h-screen pt-4 overflow-x-hidden">
-      <div className="relative mx-auto w-full max-w-5xl px-6 pb-10">
+    <main className="relative min-h-screen overflow-x-hidden">
+      <div className="relative mx-auto w-full max-w-5xl px-6 pb-20">
         <div className="space-y-4">
           {/* Header Section */}
           <div className="text-center space-y-1.5">
@@ -179,7 +239,7 @@ export default function GeneratePage() {
                       />
                     </svg>
                     <p className="text-sm text-white/70 mb-1">Drop files here or click to upload</p>
-                    <p className="text-xs text-white/40">PDF, PPTX, PNG, JPG, TXT</p>
+                    <p className="text-xs text-white/40">PDF, DOCX, TXT, Images (JPG/PNG), PowerPoint</p>
 
                     <input
                       id="file-input"
@@ -229,9 +289,7 @@ export default function GeneratePage() {
                   <textarea
                     value={studyMaterial}
                     onChange={(e) => setStudyMaterial(e.target.value)}
-                    placeholder="Enter your study material or describe the quiz you want...
-Examples:
-• Paste your lecture notes or textbook content
+                    placeholder="• Paste your lecture notes or textbook content
 • 'Create a quiz about photosynthesis for high school biology'
 • 'Generate questions on the American Revolution'"
                     className="w-full h-44 rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-base text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
@@ -268,30 +326,48 @@ Examples:
 
                 <div className="space-y-1.5">
                   <label className="text-xs text-white/70">Number of Questions</label>
-                  {numQuestions === 0 ? (
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      placeholder="Enter number"
-                      onChange={(e) => setNumQuestions(Number(e.target.value) || 10)}
-                      onBlur={(e) => {
-                        if (!e.target.value) setNumQuestions(10);
-                      }}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 text-center focus:outline-none focus:ring-2 focus:ring-white/20"
-                      autoFocus
-                    />
+                  {isCustomAmount ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={customQuestions}
+                        onChange={(e) => setCustomQuestions(e.target.value)}
+                        placeholder="1-100"
+                        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => {
+                          setIsCustomAmount(false);
+                          setCustomQuestions("");
+                        }}
+                        className="px-3 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                        title="Back to presets"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ) : (
                     <select
                       value={numQuestions}
-                      onChange={(e) => setNumQuestions(Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val === 0) {
+                          setIsCustomAmount(true);
+                          setCustomQuestions("");
+                        } else {
+                          setNumQuestions(val);
+                        }
+                      }}
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:ring-2 focus:ring-white/20"
                     >
                       <option value={5}>5</option>
                       <option value={10}>10</option>
                       <option value={25}>25</option>
                       <option value={50}>50</option>
-                      <option value={0}>Custom</option>
+                      <option value={0}>Custom...</option>
                     </select>
                   )}
                 </div>
@@ -306,19 +382,9 @@ Examples:
 
               {/* Generate Button */}
               {!generatedQuiz ? (
-                <div className="relative w-full">
-                  {isGenerating && (
-                    <div className="absolute inset-0 rounded-xl overflow-hidden">
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, rgba(255,255,255,0.8) 90deg, transparent 120deg, transparent 360deg)",
-                          animation: "spin 2s linear infinite",
-                        }}
-                      />
-                    </div>
-                  )}
+                <div className="space-y-3">
                   <button
+                    ref={buttonRef}
                     onClick={handleGenerate}
                     disabled={
                       (inputMode === "text" && !studyMaterial.trim()) ||
@@ -327,12 +393,48 @@ Examples:
                     }
                     className={`relative w-full rounded-xl px-6 py-3.5 text-base font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       isGenerating
-                        ? "bg-black/90 text-white border-2 border-transparent m-[2px]"
+                        ? "bg-black/90 text-white border-none"
                         : "bg-white/10 text-white border-2 border-white/20 hover:bg-white/15 hover:scale-[1.02]"
                     }`}
                   >
-                    {isGenerating ? "Generating..." : "Generate Quiz"}
+                  {isGenerating && (
+                    <svg
+                      className="absolute inset-0 w-full h-full pointer-events-none"
+                      viewBox={`0 0 ${buttonBox.width} ${buttonBox.height}`}
+                      preserveAspectRatio="none"
+                      style={{ overflow: "visible" }}
+                    >
+                      {/* Static border */}
+                      <rect
+                        className="border-path"
+                        x="1"
+                        y="1"
+                        width={innerWidth}
+                        height={innerHeight}
+                        rx={cornerRadius}
+                      />
+                      {/* Animated light */}
+                      <rect
+                        className="light-path"
+                        x="1"
+                        y="1"
+                        width={innerWidth}
+                        height={innerHeight}
+                        rx={cornerRadius}
+                        style={{
+                          "--dash-array": `${dashLength} ${dashGap}`,
+                          "--dash-offset": dashOffset,
+                        } as CSSProperties}
+                      />
+                    </svg>
+                  )}
+                    <span className="relative z-10">
+                      {isGenerating ? "Generating..." : "Generate Quiz"}
+                    </span>
                   </button>
+                  <p className="text-center text-xs text-white/40">
+                    AI-generated content may contain errors. Please review before use.
+                  </p>
                 </div>
               ) : (
                 <div className="flex gap-3">
@@ -342,6 +444,9 @@ Examples:
                       setStudyMaterial("");
                       setFiles([]);
                       setError(null);
+                      setIsCustomAmount(false);
+                      setCustomQuestions("");
+                      setNumQuestions(10);
                     }}
                     variant="ghost"
                     size="lg"
